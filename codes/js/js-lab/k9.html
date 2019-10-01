@@ -1,0 +1,150 @@
+<html>
+<head>
+  <title>K9</title>
+  <script>
+  window.onload = function(){
+    // http://jsfiddle.net/6fdvd/4/
+    var canvas;
+    var ctx;
+    var W,H;
+    var fontSize = '100'
+    var degree = 0;
+    
+    var balls = []
+    var maxBalls;
+    var maxBallsDegree;
+
+    var rockets = []
+
+      canvas = document.getElementById('c');
+      if(canvas != null){
+        ctx = canvas.getContext('2d');
+        
+        if(ctx){
+          W = window.innerWidth;
+          H = window.innerHeight;
+          canvas.width = W
+          canvas.height = H;
+          maxBalls = H
+          maxBallsDegree = 360 / maxBalls
+          function degToRad(deg){
+            return (deg*Math.PI)/180
+          }
+
+          function radToDeg(rad){
+            return (rad*180)/Math.PI
+          }
+          
+          function Rocket(_x,_y,_xSpeed,_ySpeed)
+          {
+            this.x = _x;
+            this.y = _y;
+            this.xSpeed = _xSpeed;
+            this.ySpeed = _ySpeed;
+            this.alive = 1;
+            this.radius = Math.random()*20+1
+            this.draw = function(){
+
+              if(this.alive == 1){
+                var grd = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
+                grd.addColorStop(0, 'rgba(0,255,255,.1)');
+                grd.addColorStop(1, 'rgba(0,0,0,.1)');  
+                ctx.fillStyle = grd
+                ctx.beginPath()
+                ctx.arc(this.x,this.y,this.radius,Math.PI*2,false)
+                ctx.fill()
+
+                this.radius *= 0.90
+                if(this.radius < 1){
+                  this.alive = 0;
+                }
+
+                this.x += this.xSpeed
+                this.y += this.ySpeed
+              }
+            }
+          }
+          
+          function Ball(_x,_y)
+          {
+            this.x = _x;
+            this.y = _y;
+            this.xSpeed = 0
+            this.ySpeed = 0;
+            this.go = 0
+
+            this.draw = function(i){
+              var grd = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, 30);
+              grd.addColorStop(0, 'rgba(0,255,255,1)');
+              grd.addColorStop(1, 'rgba(255,255,255,1)');
+              
+              ctx.fillStyle = grd
+              ctx.beginPath()
+              ctx.arc(this.x,this.y,maxBallsDegree,Math.PI*2,false)
+              ctx.fill()
+
+              this.x = 10*i
+              this.y = (H/2)+Math.sin(this.go + maxBallsDegree*i)*(H/2)
+              this.go += 0.01
+
+              // the chances to spawn rockets
+              if(Math.random() > .99){
+                rockets.push( new Rocket(this.x,this.y,
+                
+                0  ,
+                0 ))
+              }
+            }
+          }
+          //
+          for(var i=0; i < maxBalls; i++){
+            balls.push( 
+                new Ball(  // copy this
+                  (W/2) + Math.sin(degToRad(maxBallsDegree * i)) * fontSize ,
+                  (H/2) + Math.cos(degToRad(maxBallsDegree * i)) * fontSize ))
+          }
+
+
+          function draw(){
+            ctx.fillStyle = 'rgba(0,0,0,0.1)'  
+            ctx.fillRect(0,0,W,H)
+
+            for(var i=0; i < balls.length; i++){
+              balls[i].draw(i)
+            }
+
+            for(var i=0; i < rockets.length; i++){
+              if(rockets[i].alive == 0){
+                rockets.splice(i,1)
+              }
+              rockets[i].draw()
+            }
+
+            // text
+            //ctx.font = fontSize+'px Arial bold'
+            ctx.font = '30px Arial bold'
+            ctx.fillStyle = 'rgba(255,255,255,1)'
+            ctx.fillText('Welcome to K9 servers',W/2 - (fontSize/2)-50,H/2+ (fontSize/2)-25)
+            ctx.font = '20px Arial bold'
+            ctx.fillText('index by Moody',W/2 - (fontSize/2)-20,H/2+ (fontSize/2))
+            
+            degree += 1
+            if(degree > 360){
+              degree = 0
+            }
+            console.log(degree)
+          }//draw
+          setInterval(draw,30)
+        }//endof ctx
+      }//endof canvas
+    }//endof onload()
+  </script>
+  <style>
+    canvas {display:block;}
+    *{margin:0px;padding:0px;}
+  </style>
+</head>
+<body>
+  <canvas id='c'></canvas>
+</body>
+</html>    

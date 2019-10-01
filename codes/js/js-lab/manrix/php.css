@@ -1,0 +1,46 @@
+#php {
+    position: absolute;
+    top:10px;
+    left:10px;
+    
+    background: black;
+}
+
+ul {
+    list-style: none;
+}
+
+li {
+    font-weight: bold;
+    margin: 0;
+    padding: 1px 10px 5px 20px;
+    
+    
+}
+
+#php h1,h2,h3 {
+    margin-left:5px;
+    color: #AAFF00;
+}
+#php h1:hover,h2:hover,h3:hover {
+    color: #fff;
+}
+
+#php a {
+    color: #666;
+    text-decoration:none;
+}
+
+#php a:hover {
+    color: #FFF;
+}
+
+* {
+    margin: 0px; 
+    padding: 0px;
+    }
+
+canvas {
+    display:block;
+}
+    

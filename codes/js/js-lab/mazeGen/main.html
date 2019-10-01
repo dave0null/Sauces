@@ -1,0 +1,225 @@
+<html>
+<head>
+  <title> MoodyKSA </title>
+  
+  <style>
+    * {margin:0px; padding:0px;}
+    div {}
+    #menu {
+      position:fixed;
+      top:0px;
+      left:0px
+    }
+    canvas {
+      z-index: -1;
+      display:block;
+    }
+  </style>
+  <script src='Wall.js'></script>
+  <script src='mazeGen.js'></script>
+  <script>
+    
+    /*
+      Recursive backtracker Algorithm
+      The depth-first search algorithm of maze generation is frequently implemented using backtracking:
+
+      1- Make the initial cell the current cell and mark it as visited
+      
+        While (there are unvisited cells)
+          If (the current cell has any neighbours which have not been visited)
+            1- Choose randomly one of the unvisited neighbours
+            2- Push the current cell to the stack
+            3- Remove the wall between the current cell and the chosen cell
+            4- Make the chosen cell the current cell and mark it as visited
+          
+          Else (if stack is not empty)
+            1- Pop a cell from the stack
+            2- Make it the current cell
+          Else
+            1- Pick a random cell, make it the current cell and mark it as visit
+    */
+
+    function game(){
+
+      var canvas = document.getElementById('c');
+      var ctx = canvas.getContext('2d');
+
+      var W = window.innerWidth,
+          H = window.innerHeight;
+      canvas.width = W;
+      canvas.height = H;
+
+      var tileWidth  = 16,
+          tileHeight = 16;
+      
+      var mapWidth  = Math.floor(W / tileWidth),
+          mapHeight = Math.floor(H / tileHeight)
+
+      var walls = []; 
+      var stack = []  
+      var done = 0;
+      var stackColor     = 'rgba(000,000,000,0)',  // the color of the nodes in stack -> the lines
+          unvisitedColor = 'rgba(255,200,255,1)'   // the nieghbours color
+
+      createWalls()
+      function createWalls(){
+        console.log('Creating walls...')
+
+        for(var x=0; x < mapWidth; x++)
+        {
+          walls[x] = [];
+          for(var y=0; y < mapHeight; y++)
+          {
+            walls[x][y] = new Wall(x,y, tileWidth,tileHeight)
+          }
+        }
+        
+        // starting node
+        walls[1][1].current = 1
+        draw()
+      }
+
+      function draw(){
+        //console.log('Redrawing...')
+        // draw walls
+        for(var x=0; x < walls.length; x++){
+          for(var y=0; y < walls[x].length; y++){
+            walls[x][y].draw(ctx);
+          }
+        }
+      }
+
+      (function(){
+        var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame 
+                                    window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
+        window.requestAnimationFrame = requestAnimationFrame  
+      })();
+
+      function mazeGen(map,ctx)
+      {
+        var currentNode = null;
+        
+        // find out which one is has the status .current = 1
+        // then asign it to our variable
+        for(var x=0; x < map.length; x++){
+          for(var y=0; y < map[x].length; y++){
+            if(map[x][y].current == 1){
+              currentNode = map[x][y]
+              break;
+            }
+          }
+        }
+
+        if(done == 1){
+          return;
+        }
+
+        // get the neghbours array
+        var neighbours = currentNode.getNeighbours(map)
+
+        /* =============================================== */
+        /* Choosing from neighbours                        */
+        /* =============================================== */
+        if(neighbours.length > 0) {
+          console.log('choosing random neighbour ')
+          
+          // create random number and choose a random naighbour
+          var NeighbourRandom = Math.floor(Math.random()*neighbours.length) // Generate random number
+          var neighbour = neighbours[NeighbourRandom]                       // pick neighbour
+          stack.push( currentNode )
+          swapCurrentWall(currentNode,neighbour)
+
+        /* =============================================== */
+        /* Choosing from the stack                         */
+        /* =============================================== */
+        } else if(stack.length > 0){
+          console.log('choosing from stack ') 
+          
+          // choose currentNode from top of stack then pop it 
+          swapCurrentWall(currentNode,stack[stack.length-1]) 
+          stack.splice(stack.length-1,1)
+
+        /* =============================================== */
+        /* Choosing random spots in map                    */
+        /* =============================================== */
+        } else {
+
+          console.log('choosing random spot for maze')
+
+          if(stack.length < 1) {
+            console.log('I think we are finished now. -Made by m00dy')
+            currentNode.current = 0
+            done = 1
+          }
+
+          var x = Math.floor(Math.random() * (map.length-2))+1,
+              y = Math.floor(Math.random() * (map[0].length-2))+1;
+          if(map[x][y].visited == 0 ){
+            swapCurrentWall(currentNode,map[x][y])
+          }
+        }
+
+        // drawing the items in stack
+        if(stack.length > 0)
+        {
+          // some math so we can change size of the rect we use to draw the stack
+          var size = stack[0].w/2 + stack[0].w/5
+          for(var s=0; s < stack.length; s++)
+          {
+              // get currentNode from stack
+              var currentNode = stack[s],
+                  prevNode    = stack[s-1]
+
+              // the boxes showing the stack positions
+              ///*
+              ctx.fillStyle = stackColor
+              ctx.fillRect( currentNode.x * currentNode.w + size, 
+                            currentNode.y * currentNode.h + size,
+                            currentNode.w - size * 2,
+                            currentNode.h - size * 2)
+                //*/
+              // draw the lines connecting the stacks
+              ctx.strokeStyle = stackColor
+              ctx.beginPath()
+              if(s > 0){
+                ctx.moveTo( currentNode.x * currentNode.w + currentNode.w/2, 
+                            currentNode.y * currentNode.h + currentNode.h/2);
+                ctx.lineTo( prevNode.x * prevNode.w + prevNode.w/2, 
+                            prevNode.y * prevNode.h + prevNode.h/2);
+              }
+              ctx.stroke()
+
+              // lets draw the neighbours taken from the stack : )
+              var neighbours = currentNode.getNeighbours(map)
+              if(neighbours.length > 0){
+                for(var n=0; n < neighbours.length; n++){
+                  var neighbour = neighbours[n]
+                  ctx.strokeStyle = unvisitedColor
+                  ctx.strokeRect( neighbour.x * neighbour.w + size, 
+                                  neighbour.y * neighbour.h + size,
+                                  neighbour.w - size * 2,
+                                  neighbour.h - size * 2)
+                    
+                }
+              }
+            }
+        }
+      }
+
+      function render(){
+        draw()
+        mazeGen(walls,ctx)
+        requestAnimationFrame(render)  
+      }
+      render()
+    }//end window.onload
+  </script>
+</head>
+  <body onload='game()'>
+    <div id='menu'>
+    <!--<button type="button" onclick='game()'>Start game</button> -->
+    </div>
+
+    <canvas id='c'></canvas>
+  </body>
+</html>
